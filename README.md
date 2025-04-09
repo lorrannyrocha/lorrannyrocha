@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <title>Simulador Árvore de Leitura</title>
   <style>
-    body { font-family: Arial; padding: 20px; }
+    body { font-family: Arial, sans-serif; padding: 20px; }
     label, select, input { display: block; margin-bottom: 10px; }
-    .resultado, .historico { margin-top: 20px; }
+    .historico { margin-top: 20px; }
     table, th, td { border: 1px solid #ccc; border-collapse: collapse; padding: 8px; }
   </style>
 </head>
@@ -16,31 +16,31 @@
 
 <form id="formulario">
   <label>RA do Aluno:</label>
-  <input type="text" id="ra" required>
+  <input type="text" id="ra" required maxlength="12" pattern="[0-9]+">
 
   <label>Senha:</label>
-  <input type="password" id="senha" required>
+  <input type="password" id="senha" required minlength="4">
 
-  <label>Escolha o Livro:</label>
-  <select id="livro">
-    <option value="O Pequeno Príncipe">O Pequeno Príncipe</option>
-    <option value="Dom Casmurro">Dom Casmurro</option>
-    <option value="Capitães da Areia">Capitães da Areia</option>
-    <option value="O Alienista">O Alienista</option>
-    <option value="Memórias Póstumas de Brás Cubas">Memórias Póstumas de Brás Cubas</option>
-    <option value="A Hora da Estrela">A Hora da Estrela</option>
+  <label>Série do Aluno:</label>
+  <select id="serie" required>
+    <option value="">Selecione</option>
+    <option value="6º Ano">6º Ano</option>
+    <option value="7º Ano">7º Ano</option>
+    <option value="8º Ano">8º Ano</option>
+    <option value="9º Ano">9º Ano</option>
+    <option value="1º Ano EM">1º Ano EM</option>
+    <option value="2º Ano EM">2º Ano EM</option>
+    <option value="3º Ano EM">3º Ano EM</option>
   </select>
 
-  <button type="submit">Marcar Livro e Responder</button>
+  <button type="submit">Marcar Todos os Livros</button>
 </form>
-
-<div class="resultado" id="resultadoBox"></div>
 
 <div class="historico" id="historicoBox">
   <h3>Histórico de Leituras</h3>
   <table>
     <thead>
-      <tr><th>RA</th><th>Livro</th><th>Data</th><th>Acertos</th></tr>
+      <tr><th>RA</th><th>Série</th><th>Livro</th><th>Data</th><th>Acertos</th></tr>
     </thead>
     <tbody id="tabelaHistorico"></tbody>
   </table>
@@ -49,6 +49,15 @@
 
 <script>
   const historico = [];
+  const alunosRegistrados = new Map();
+  const listaLivros = [
+    "O Pequeno Príncipe",
+    "Dom Casmurro",
+    "Capitães da Areia",
+    "O Alienista",
+    "Memórias Póstumas de Brás Cubas",
+    "A Hora da Estrela"
+  ];
 
   document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("formulario");
@@ -57,47 +66,82 @@
     form.addEventListener("submit", function (e) {
       e.preventDefault();
 
-      const ra = document.getElementById("ra").value;
-      const livro = document.getElementById("livro").value;
+      const ra = document.getElementById("ra").value.trim();
+      const senha = document.getElementById("senha").value.trim();
+      const serie = document.getElementById("serie").value;
 
-      const execucoesDoAluno = historico.filter(entry => entry.ra === ra).length;
-      if (execucoesDoAluno >= 90) {
-        alert("Limite de 90 marcações atingido para este aluno.");
+      if (!validarRA(ra) || !validarSenha(senha)) {
+        alert("RA ou senha inválidos.");
         return;
       }
 
-      const novaEntrada = {
-        ra: ra,
-        livro: livro,
-        data: new Date().toLocaleDateString(),
-        acertos: Math.floor(Math.random() * 11)
-      };
+      if (!alunosRegistrados.has(ra)) {
+        alunosRegistrados.set(ra, senha);
+      } else if (alunosRegistrados.get(ra) !== senha) {
+        alert("Senha incorreta.");
+        return;
+      }
 
-      historico.push(novaEntrada);
+      // Impede novas execuções se já marcou todos os livros
+      const execucoesDoAluno = historico.filter(entry => entry.ra === ocultarRA(ra)).length;
+      if (execucoesDoAluno >= listaLivros.length) {
+        alert("Todos os livros já foram marcados para este aluno.");
+        return;
+      }
+
+      listaLivros.forEach(livro => {
+        const jaMarcado = historico.find(entry => entry.ra === ocultarRA(ra) && entry.livro === livro);
+        if (!jaMarcado) {
+          historico.push({
+            ra: ocultarRA(ra),
+            serie: serie,
+            livro: livro,
+            data: new Date().toLocaleDateString(),
+            acertos: gerarAcertosFixos()
+          });
+        }
+      });
+
       atualizarTabela();
     });
 
     btnExportar.addEventListener("click", exportarCSV);
   });
 
+  function validarRA(ra) {
+    return /^[0-9]{4,12}$/.test(ra);
+  }
+
+  function validarSenha(senha) {
+    return senha.length >= 4;
+  }
+
+  function ocultarRA(ra) {
+    return ra.slice(0, 2) + "***" + ra.slice(-2);
+  }
+
+  function gerarAcertosFixos() {
+    return 10; // Valor fixo para evitar variações
+  }
+
   function atualizarTabela() {
     const tabela = document.getElementById("tabelaHistorico");
     tabela.innerHTML = "";
     historico.forEach(item => {
-      const row = `<tr>
+      tabela.innerHTML += `<tr>
         <td>${item.ra}</td>
+        <td>${item.serie}</td>
         <td>${item.livro}</td>
         <td>${item.data}</td>
         <td>${item.acertos}</td>
       </tr>`;
-      tabela.innerHTML += row;
     });
   }
 
   function exportarCSV() {
-    let csv = "RA,Livro,Data,Acertos\n";
+    let csv = "RA,Série,Livro,Data,Acertos\n";
     historico.forEach(item => {
-      csv += `${item.ra},${item.livro},${item.data},${item.acertos}\n`;
+      csv += `${item.ra},${item.serie},${item.livro},${item.data},${item.acertos}\n`;
     });
 
     const blob = new Blob([csv], { type: "text/csv" });
