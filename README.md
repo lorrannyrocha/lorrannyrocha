@@ -1,55 +1,20 @@
-<!DOCTYPE html><html lang="pt-BR">
+<!DOCTYPE html>
+<html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Simulador de Leitura - Árvore</title>
+  <title>Simulador Árvore de Leitura</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 30px;
-      background-color: #eef2f5;
-    }
-    h1 {
-      color: #2c3e50;
-    }
-    input, select, button {
-      display: block;
-      margin-top: 10px;
-      padding: 10px;
-      width: 100%;
-      max-width: 400px;
-    }
-    .box {
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 0 8px #ccc;
-      max-width: 600px;
-    }
-    .resultado, .historico {
-      background-color: #d4edda;
-      padding: 15px;
-      margin-top: 20px;
-      color: #155724;
-      display: none;
-      border-radius: 5px;
-    }
-    table {
-      width: 100%;
-      margin-top: 20px;
-      border-collapse: collapse;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: left;
-    }
-    th {
-      background: #f0f0f0;
-    }
+    body { font-family: Arial; padding: 20px; }
+    label, select, input { display: block; margin-bottom: 10px; }
+    .resultado, .historico { margin-top: 20px; }
+    table, th, td { border: 1px solid #ccc; border-collapse: collapse; padding: 8px; }
   </style>
 </head>
-<body>  <div class="box">
-    <h1>Simulador Árvore de Leitura</h1><form id="formulario">
+<body>
+
+<h2>Simulador Árvore de Leitura</h2>
+
+<form id="formulario">
   <label>RA do Aluno:</label>
   <input type="text" id="ra" required>
 
@@ -70,6 +35,7 @@
 </form>
 
 <div class="resultado" id="resultadoBox"></div>
+
 <div class="historico" id="historicoBox">
   <h3>Histórico de Leituras</h3>
   <table>
@@ -81,58 +47,65 @@
   <button onclick="exportarCSV()">Exportar CSV</button>
 </div>
 
-  </div>  <script>
+<script>
+  const historico = [];
+
+  window.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("formulario");
-    const resultadoBox = document.getElementById("resultadoBox");
-    const historicoBox = document.getElementById("historicoBox");
-    const tabelaHistorico = document.getElementById("tabelaHistorico");
 
-    function atualizarHistorico() {
-      const leituras = JSON.parse(localStorage.getItem("leituras") || "[]");
-      tabelaHistorico.innerHTML = "";
-      leituras.forEach(item => {
-        const linha = `<tr><td>${item.ra}</td><td>${item.livro}</td><td>${item.data}</td><td>${item.acertos}</td></tr>`;
-        tabelaHistorico.innerHTML += linha;
-      });
-      if (leituras.length > 0) historicoBox.style.display = "block";
-    }
-
-    function exportarCSV() {
-      const leituras = JSON.parse(localStorage.getItem("leituras") || "[]");
-      let csv = "RA,Livro,Data,Acertos\n";
-      leituras.forEach(l => {
-        csv += `${l.ra},${l.livro},${l.data},${l.acertos}\n`;
-      });
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "historico_leituras.csv";
-      link.click();
-    }
-
-    form.addEventListener("submit", function(e) {
+    form.addEventListener("submit", function (e) {
       e.preventDefault();
 
       const ra = document.getElementById("ra").value;
-      const senha = document.getElementById("senha").value;
       const livro = document.getElementById("livro").value;
-      const data = new Date().toLocaleString();
-      const acertos = "100%";
 
-      const mensagem = `RA: ${ra}<br>Livro: <strong>${livro}</strong><br>Leitura concluída.<br>Atividades respondidas: <strong>${acertos}</strong><br>Data: ${data}`;
+      const execucoesDoAluno = historico.filter(entry => entry.ra === ra).length;
+      if (execucoesDoAluno >= 128) {
+        alert("Limite de 128 marcações atingido para este aluno.");
+        return;
+      }
 
-      resultadoBox.innerHTML = mensagem;
-      resultadoBox.style.display = "block";
+      const novaEntrada = {
+        ra: ra,
+        livro: livro,
+        data: new Date().toLocaleDateString(),
+        acertos: Math.floor(Math.random() * 11)
+      };
 
-      const novaLeitura = { ra, livro, data, acertos };
-      const leituras = JSON.parse(localStorage.getItem("leituras") || "[]");
-      leituras.push(novaLeitura);
-      localStorage.setItem("leituras", JSON.stringify(leituras));
+      historico.push(novaEntrada);
+      atualizarTabela();
+    });
+  });
 
-      atualizarHistorico();
-      form.reset();
+  function atualizarTabela() {
+    const tabela = document.getElementById("tabelaHistorico");
+    tabela.innerHTML = "";
+    historico.forEach(item => {
+      const row = `<tr>
+        <td>${item.ra}</td>
+        <td>${item.livro}</td>
+        <td>${item.data}</td>
+        <td>${item.acertos}</td>
+      </tr>`;
+      tabela.innerHTML += row;
+    });
+  }
+
+  function exportarCSV() {
+    let csv = "RA,Livro,Data,Acertos\n";
+    historico.forEach(item => {
+      csv += `${item.ra},${item.livro},${item.data},${item.acertos}\n`;
     });
 
-    atualizarHistorico();
-  </script></body>
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "historico.csv";
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }
+</script>
+
+</body>
 </html>
