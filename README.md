@@ -1,128 +1,138 @@
-ola me chamo lorranny e sou aluna do alura e estou estudando sobre codigos e como fazer projetose 
-estou animada para expandir meus conhecimento nessa area
+<!DOCTYPE html><html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Simulador de Leitura - Árvore</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      background-color: #eef2f5;
+    }
+    h1 {
+      color: #2c3e50;
+    }
+    input, select, button {
+      display: block;
+      margin-top: 10px;
+      padding: 10px;
+      width: 100%;
+      max-width: 400px;
+    }
+    .box {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 8px #ccc;
+      max-width: 600px;
+    }
+    .resultado, .historico {
+      background-color: #d4edda;
+      padding: 15px;
+      margin-top: 20px;
+      color: #155724;
+      display: none;
+      border-radius: 5px;
+    }
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background: #f0f0f0;
+    }
+  </style>
+</head>
+<body>  <div class="box">
+    <h1>Simulador Árvore de Leitura</h1><form id="formulario">
+  <label>RA do Aluno:</label>
+  <input type="text" id="ra" required>
 
-estarei compartilhando um projeto feito no javascript:
+  <label>Senha:</label>
+  <input type="password" id="senha" required>
 
-//variáveis da bolinha
-let xBolinha = 100;
-let yBolinha = 200;
-let diametro = 20;
-let raio = diametro / 2;
+  <label>Escolha o Livro:</label>
+  <select id="livro">
+    <option value="O Pequeno Príncipe">O Pequeno Príncipe</option>
+    <option value="Dom Casmurro">Dom Casmurro</option>
+    <option value="Capitães da Areia">Capitães da Areia</option>
+    <option value="O Alienista">O Alienista</option>
+    <option value="Memórias Póstumas de Brás Cubas">Memórias Póstumas de Brás Cubas</option>
+    <option value="A Hora da Estrela">A Hora da Estrela</option>
+  </select>
 
-//variáveis do oponente
-let xRaqueteOponente = 585;
-let yRaqueteOponente = 150;
+  <button type="submit">Marcar Livro e Responder</button>
+</form>
 
-//velocidade da bolinha
-let velocidadeXBolinha = 6;
-let velocidadeYBolinha = 6;
+<div class="resultado" id="resultadoBox"></div>
+<div class="historico" id="historicoBox">
+  <h3>Histórico de Leituras</h3>
+  <table>
+    <thead>
+      <tr><th>RA</th><th>Livro</th><th>Data</th><th>Acertos</th></tr>
+    </thead>
+    <tbody id="tabelaHistorico"></tbody>
+  </table>
+  <button onclick="exportarCSV()">Exportar CSV</button>
+</div>
 
-//variáveis da raquete
-let xRaquete = 5;
-let yRaquete = 150;
-let raqueteComprimento = 10;
-let raqueteAltura = 90;
+  </div>  <script>
+    const form = document.getElementById("formulario");
+    const resultadoBox = document.getElementById("resultadoBox");
+    const historicoBox = document.getElementById("historicoBox");
+    const tabelaHistorico = document.getElementById("tabelaHistorico");
 
-//placar do jogo
-let meusPontos = 0;
-let pontosDoOponente = 0;
+    function atualizarHistorico() {
+      const leituras = JSON.parse(localStorage.getItem("leituras") || "[]");
+      tabelaHistorico.innerHTML = "";
+      leituras.forEach(item => {
+        const linha = `<tr><td>${item.ra}</td><td>${item.livro}</td><td>${item.data}</td><td>${item.acertos}</td></tr>`;
+        tabelaHistorico.innerHTML += linha;
+      });
+      if (leituras.length > 0) historicoBox.style.display = "block";
+    }
 
+    function exportarCSV() {
+      const leituras = JSON.parse(localStorage.getItem("leituras") || "[]");
+      let csv = "RA,Livro,Data,Acertos\n";
+      leituras.forEach(l => {
+        csv += `${l.ra},${l.livro},${l.data},${l.acertos}\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "historico_leituras.csv";
+      link.click();
+    }
 
-let colidiu = false;
+    form.addEventListener("submit", function(e) {
+      e.preventDefault();
 
-function setup() {
-  createCanvas(600, 400);
-}
+      const ra = document.getElementById("ra").value;
+      const senha = document.getElementById("senha").value;
+      const livro = document.getElementById("livro").value;
+      const data = new Date().toLocaleString();
+      const acertos = "100%";
 
-function draw() {
-    background(0);
-    mostraBolinha();
-    movimentaBolinha();
-    verificaColisaoBorda();
-    mostraRaquete(xRaquete, yRaquete);
-    movimentaMinhaRaquete();
-    verificaColisaoRaquete(xRaquete, yRaquete);
-    verificaColisaoRaquete(xRaqueteOponente, yRaqueteOponente);
-    mostraRaquete(xRaqueteOponente, yRaqueteOponente);
-    movimentaRaqueteOponente();
-    incluiPlacar() 
-    marcaPonto();
-}
-function mostraBolinha() {
-  circle(xBolinha, yBolinha, diametro);
-}
+      const mensagem = `RA: ${ra}<br>Livro: <strong>${livro}</strong><br>Leitura concluída.<br>Atividades respondidas: <strong>${acertos}</strong><br>Data: ${data}`;
 
-function movimentaBolinha() {
-  xBolinha += velocidadeXBolinha;
-  yBolinha += velocidadeYBolinha;
-}
+      resultadoBox.innerHTML = mensagem;
+      resultadoBox.style.display = "block";
 
-function verificaColisaoBorda() {
-  if (xBolinha + raio > width || xBolinha - raio < 0) {
-    velocidadeXBolinha *= -1;
-  }
-  if (yBolinha + raio > height || yBolinha - raio < 0) {
-    velocidadeYBolinha *= -1;
-  }
-}
+      const novaLeitura = { ra, livro, data, acertos };
+      const leituras = JSON.parse(localStorage.getItem("leituras") || "[]");
+      leituras.push(novaLeitura);
+      localStorage.setItem("leituras", JSON.stringify(leituras));
 
-function mostraRaquete(x,y) {
-    rect(x, y, raqueteComprimento, raqueteAltura);
-}
+      atualizarHistorico();
+      form.reset();
+    });
 
-function movimentaMinhaRaquete() {
-  if(keyIsDown(UP_ARROW)) {
-    yRaquete -= 10;
-  }
-  if(keyIsDown(DOWN_ARROW)) {
-    yRaquete += 10;
-  }
-}
-
-function verificaColisaoRaquete() {
-  if (xBolinha - raio < xRaquete + raqueteComprimento && yBolinha - raio < yRaquete + raqueteAltura && yBolinha + raio > yRaquete) {
-    velocidadeXBolinha *= -1;
-  }
-}
-
-function verificaColisaoRaquete(x, y) {
-    colidiu = collideRectCircle(x, y, raqueteComprimento, raqueteAltura, xBolinha, yBolinha, raio);
-    if (colidiu){
-        velocidadeXBolinha *= -1;
-  }
-}
-
-function movimentaRaqueteOponente() {
-    velocidadeYOponente = yBolinha - yRaqueteOponente - raqueteComprimento / 2 - 30;
-    yRaqueteOponente += velocidadeYOponente
-}
-
-
-function incluiPlacar(){
-  stroke(255)
-    textAlign(CENTER);
-    textSize(16);
-    fill(color(255,140, 0));
-    rect(150, 10, 40, 20);
-    fill(255);
-    text(meusPontos, 170, 26);
-    fill(color(255,140, 0));
-    rect(450, 10, 40, 20);
-    fill(255);
-    text(pontosDoOponente, 470, 26);
-
-
-
-}
-
-
-function marcaPonto() {
-  if (xBolinha > 580) {
-    meusPontos += 1;
-  }
-  if (xBolinha < 10) {
-    pontosDoOponente += 1;
-  }
-}
-
-
+    atualizarHistorico();
+  </script></body>
+</html>
