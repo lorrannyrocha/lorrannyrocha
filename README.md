@@ -44,14 +44,15 @@
     </thead>
     <tbody id="tabelaHistorico"></tbody>
   </table>
-  <button onclick="exportarCSV()">Exportar CSV</button>
+  <button id="btnExportar">Exportar CSV</button>
 </div>
 
 <script>
   const historico = [];
 
-  window.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("formulario");
+    const btnExportar = document.getElementById("btnExportar");
 
     form.addEventListener("submit", function (e) {
       e.preventDefault();
@@ -60,8 +61,8 @@
       const livro = document.getElementById("livro").value;
 
       const execucoesDoAluno = historico.filter(entry => entry.ra === ra).length;
-      if (execucoesDoAluno >= 128) {
-        alert("Limite de 128 marcações atingido para este aluno.");
+      if (execucoesDoAluno >= 90) {
+        alert("Limite de 90 marcações atingido para este aluno.");
         return;
       }
 
@@ -75,6 +76,8 @@
       historico.push(novaEntrada);
       atualizarTabela();
     });
+
+    btnExportar.addEventListener("click", exportarCSV);
   });
 
   function atualizarTabela() {
