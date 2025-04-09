@@ -10,9 +10,11 @@
       padding: 20px;
       color: #006600;
     }
+
     h2 {
       color: #004d00;
     }
+
     .caixa {
       border: 2px solid #00cc00;
       padding: 20px;
@@ -21,6 +23,7 @@
       max-width: 500px;
       margin: auto;
     }
+
     input, select, button {
       display: block;
       margin: 10px 0;
@@ -30,6 +33,7 @@
       background-color: #f0fff0;
       color: #004d00;
     }
+
     button {
       background-color: #00cc00;
       color: white;
